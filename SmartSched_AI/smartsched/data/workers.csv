@@ -1,0 +1,9 @@
+id,name,skills,shift_start,shift_end,reliability_score,overtime_eligible
+W001,Arjun Kumar,"[""CNC"", ""Milling""]",8.0,16.0,0.90,1
+W002,Priya Sharma,"[""Welding"", ""Assembly""]",8.0,16.0,0.95,0
+W003,Ravi Patel,"[""CNC"", ""Drilling""]",8.0,16.0,0.85,1
+W004,Sunita Rao,"[""Assembly"", ""QC""]",8.0,16.0,0.92,0
+W005,Mohan Das,"[""Welding""]",14.0,22.0,0.70,0
+W006,Kavitha Nair,"[""Milling"", ""CNC""]",8.0,16.0,0.88,1
+W007,Vijay Singh,"[""QC"", ""Assembly""]",8.0,16.0,0.96,0
+W008,Deepa Menon,"[""Drilling"", ""Milling""]",14.0,22.0,0.78,0

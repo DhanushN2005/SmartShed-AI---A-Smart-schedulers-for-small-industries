@@ -1,0 +1,11 @@
+id,name,machine_type,status,daily_capacity,reliability_score,maintenance_due
+M001,CNC Lathe Alpha,CNC,available,8.0,0.95,0
+M002,CNC Lathe Beta,CNC,available,8.0,0.90,0
+M003,Milling Center 1,Milling,available,8.0,0.88,0
+M004,Milling Center 2,Milling,available,8.0,0.92,0
+M005,Welding Station A,Welding,available,8.0,0.75,1
+M006,Welding Station B,Welding,available,8.0,0.95,0
+M007,Assembly Line 1,Assembly,available,8.0,0.98,0
+M008,Assembly Line 2,Assembly,available,8.0,0.85,0
+M009,Quality Inspection,QC,available,8.0,0.99,0
+M010,Drill Press,Drilling,available,8.0,0.80,0

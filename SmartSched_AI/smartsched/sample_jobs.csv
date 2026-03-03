@@ -1,0 +1,9 @@
+id,name,processing_time,due_date,priority,required_machine_type,required_worker_skill,precedence
+J011,Crankshaft Turning,3.5,2025-01-12,4,CNC,CNC,
+J012,Housing Milling,2.0,2025-01-11,3,Milling,Milling,J011
+J013,Frame Welding,4.0,2025-01-13,2,Welding,Welding,
+J014,Panel Assembly,2.5,2025-01-14,3,Assembly,Assembly,J013
+J015,Final Inspection,1.0,2025-01-15,5,QC,QC,J014
+J016,Bearing Hole Drilling,1.5,2025-01-10,4,Drilling,Drilling,
+J017,Gear CNC Profile,3.0,2025-01-12,3,CNC,CNC,
+J018,Weld Inspection,1.0,2025-01-13,2,QC,QC,J013

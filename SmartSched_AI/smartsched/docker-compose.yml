@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  smartsched:
+    build: .
+    container_name: smartsched-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - DB_URL=sqlite:///data/smartsched.db
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=change-me-in-production
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - smartsched-net
+
+networks:
+  smartsched-net:
+    driver: bridge

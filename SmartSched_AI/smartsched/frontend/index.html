@@ -1,0 +1,1766 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>SmartSched AI v2 – Production Decision Governance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ═══ DESIGN TOKENS ═══ */
+    :root {
+      --bg: #090d16;
+      --bg2: #111827;
+      --bg3: #1a2236;
+      --bg4: #1e293b;
+      --accent: #4f8ef7;
+      --accent2: #6366f1;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --text: #e2e8f0;
+      --text-inv: #0f172a;
+      --muted: #64748b;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+      --sidebar-w: 220px;
+      --header-h: 60px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --bg2: #ffffff;
+      --bg3: #f8fafc;
+      --bg4: #e2e8f0;
+      --accent: #2563eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #d97706;
+      --purple: #9333ea;
+      --cyan: #0891b2;
+      --text: #0f172a;
+      --text-inv: #ffffff;
+      --muted: #64748b;
+      --border: rgba(0, 0, 0, 0.07);
+      --border2: rgba(0, 0, 0, 0.12);
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ═══ RESET & BASE ═══ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ═══ TOP HEADER ═══ */
+    header {
+      height: var(--header-h);
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border2);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow);
+    }
+
+    [data-theme="light"] header {
+      background: rgba(248, 250, 252, 0.95);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 4px 12px rgba(79, 142, 247, 0.35);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #4f8ef7, #a855f7);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+
+    header small {
+      color: var(--muted);
+      font-size: 10.5px;
+      display: block;
+      margin-top: -2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .badge {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge.red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .icon-btn:hover {
+      background: var(--border2);
+    }
+
+    /* ═══ LAYOUT: SIDEBAR + CONTENT ═══ */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ═══ SIDEBAR NAV ═══ */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: rgba(17, 24, 39, 0.6);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 16px 10px;
+      overflow-y: auto;
+      position: sticky;
+      top: var(--header-h);
+      height: calc(100vh - var(--header-h));
+    }
+
+    [data-theme="light"] .sidebar {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .nav-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 10px 8px 4px;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 9px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 500;
+      transition: all 0.18s;
+      text-align: left;
+    }
+
+    .nav-btn .nav-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    [data-theme="light"] .nav-btn:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-btn.active {
+      background: rgba(79, 142, 247, 0.12);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-btn.active .nav-icon {
+      filter: none;
+    }
+
+    .nav-btn.nav-logout {
+      margin-top: auto;
+      color: var(--red);
+    }
+
+    .nav-btn.nav-logout:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--red);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ═══ MAIN CONTENT ═══ */
+    main {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      max-width: 1400px;
+      min-width: 0;
+    }
+
+    .panel {
+      display: none;
+      animation: panelIn 0.3s ease both;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes panelIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ═══ GRIDS ═══ */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    /* ═══ CARDS ═══ */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .card-hero {
+      background: linear-gradient(135deg, var(--bg3), var(--bg2));
+      border: 1px solid var(--border2);
+    }
+
+    /* ═══ KPI CARDS ═══ */
+    .kpi-val {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ═══ COLOR UTILITIES ═══ */
+    .accent {
+      color: var(--accent);
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .red {
+      color: var(--red);
+    }
+
+    .yellow {
+      color: var(--yellow);
+    }
+
+    .purple {
+      color: var(--purple);
+    }
+
+    .cyan {
+      color: var(--cyan);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    /* ═══ SECTION TITLE ═══ */
+    .sec-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .sec-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ═══ BUTTONS ═══ */
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', system-ui, sans-serif;
+      transition: all 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(79, 142, 247, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #3a7bd5;
+      box-shadow: 0 4px 14px rgba(79, 142, 247, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+
+    .btn-warn {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--yellow);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-warn:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg4);
+    }
+
+    .btn-sm {
+      padding: 5px 11px;
+      font-size: 11.5px;
+      border-radius: 6px;
+    }
+
+    .btn-blue {
+      background: rgba(79, 142, 247, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(79, 142, 247, 0.25);
+    }
+
+    .btn-blue:hover {
+      background: rgba(79, 142, 247, 0.22);
+    }
+
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    /* ═══ FORMS ═══ */
+    input,
+    select,
+    textarea {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: 'Inter', system-ui, sans-serif;
+      width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.12);
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    /* ═══ TABLES ═══ */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover td {
+      background: rgba(79, 142, 247, 0.04);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ═══ TAGS / BADGES ═══ */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .tag-ok {
+      background: rgba(34, 197, 94, .12);
+      color: var(--green);
+      border: 1px solid rgba(34, 197, 94, .2);
+    }
+
+    .tag-warn {
+      background: rgba(245, 158, 11, .12);
+      color: var(--yellow);
+      border: 1px solid rgba(245, 158, 11, .2);
+    }
+
+    .tag-crit {
+      background: rgba(239, 68, 68, .12);
+      color: var(--red);
+      border: 1px solid rgba(239, 68, 68, .2);
+    }
+
+    .tag-lock {
+      background: rgba(168, 85, 247, .12);
+      color: var(--purple);
+      border: 1px solid rgba(168, 85, 247, .2);
+    }
+
+    .tag-blue {
+      background: rgba(79, 142, 247, .12);
+      color: var(--accent);
+      border: 1px solid rgba(79, 142, 247, .2);
+    }
+
+    /* ═══ ALERTS ═══ */
+    .alert {
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      border: 1px solid transparent;
+    }
+
+    .alert-info {
+      background: rgba(79, 142, 247, .08);
+      border-color: rgba(79, 142, 247, .2);
+      color: var(--accent);
+    }
+
+    .alert-warn {
+      background: rgba(245, 158, 11, .08);
+      border-color: rgba(245, 158, 11, .2);
+      color: var(--yellow);
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, .08);
+      border-color: rgba(239, 68, 68, .2);
+      color: var(--red);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, .08);
+      border-color: rgba(34, 197, 94, .2);
+      color: var(--green);
+    }
+
+    /* ═══ PROGRESS BARS ═══ */
+    .progress-bar-wrap {
+      background: var(--bg3);
+      border-radius: 20px;
+      height: 5px;
+      margin: 5px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 20px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    /* ═══ TOAST ═══ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-item {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 18px;
+      min-width: 260px;
+      max-width: 360px;
+      font-size: 13px;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn .3s cubic-bezier(.16, 1, .3, 1) both;
+      pointer-events: auto;
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(100%) scale(0.95);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* ═══ STABILITY SCORE ═══ */
+    .stability-score {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    /* ═══ DIFF COLORS ═══ */
+    .diff-add {
+      color: var(--green);
+    }
+
+    .diff-rm {
+      color: var(--red);
+    }
+
+    .diff-ch {
+      color: var(--yellow);
+    }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width:1100px) {
+      .sidebar {
+        width: 60px;
+        min-width: 60px;
+        padding: 12px 8px;
+      }
+
+      .nav-btn span:not(.nav-icon) {
+        display: none;
+      }
+
+      .nav-label {
+        display: none;
+      }
+
+      .nav-btn {
+        justify-content: center;
+        padding: 10px;
+      }
+    }
+
+    @media(max-width:900px) {
+
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width:600px) {
+
+      .grid-3,
+      .grid-4,
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        padding: 16px;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="toast"></div>
+  <header>
+    <div class="brand-logo">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1>SmartSched AI v2</h1>
+        <small>Production Decision Governance</small>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge" id="sys-status">● Live</span>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+    </div>
+  </header>
+  <div class="app-body">
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-label">Overview</div>
+      <button class="nav-btn" id="nav-admin-digital" onclick="showPanel('admin-digital')"><span
+          class="nav-icon">📈</span><span>Digital Dashboard</span></button>
+      <button class="nav-btn active" onclick="showPanel('schedule')"><span
+          class="nav-icon">📅</span><span>Schedule</span></button>
+      <button class="nav-btn" onclick="showPanel('kpis')"><span class="nav-icon">📊</span><span>KPIs</span></button>
+      <div class="nav-label">Operations</div>
+      <button class="nav-btn" onclick="showPanel('risk')"><span class="nav-icon">⚠️</span><span>Risk</span></button>
+      <button class="nav-btn" onclick="showPanel('governance')"><span
+          class="nav-icon">🔒</span><span>Governance</span></button>
+      <button class="nav-btn" onclick="showPanel('disruptions')"><span
+          class="nav-icon">�</span><span>Disruptions</span></button>
+      <div class="nav-label">Analysis</div>
+      <button class="nav-btn" onclick="showPanel('simulation')"><span
+          class="nav-icon">�</span><span>Simulation</span></button>
+      <button class="nav-btn" onclick="showPanel('optimizer')"><span
+          class="nav-icon">⚙️</span><span>Optimizer</span></button>
+      <button class="nav-btn" onclick="showPanel('versions')"><span
+          class="nav-icon">🕑</span><span>Versions</span></button>
+      <div class="sidebar-footer">
+        <button class="nav-btn nav-logout" onclick="logout()"><span
+            class="nav-icon">🔓</span><span>Logout</span></button>
+      </div>
+    </nav>
+    <main>
+
+      <!-- Admin Digital Overview Panel -->
+      <div id="panel-admin-digital" class="panel">
+        <div class="sec-title">📈 Factory Digital Overview (Read-Only)</div>
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card" style="background:linear-gradient(135deg, #1e2535, #161b27);">
+            <h3>Enterprise Profitability</h3>
+            <div id="admin-net-impact" style="font-size:48px; font-weight:800; margin:10px 0;">₹0</div>
+            <p class="muted">Net impact after delay penalties and reputation risk</p>
+            <div id="admin-profit-bar"
+              style="height:8px; background:var(--bg3); border-radius:10px; margin-top:15px; overflow:hidden;">
+              <div id="admin-profit-fill" style="height:100%; width:0%; background:var(--green); transition:width 1s;">
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Operations Health</h3>
+            <div class="grid-2" style="margin-top:10px;">
+              <div>
+                <label>ON-TIME DELIVERY</label>
+                <div id="admin-otd" class="kpi-val accent">0%</div>
+              </div>
+              <div>
+                <label>FACTORY MAKESPAN</label>
+                <div id="admin-makespan" class="kpi-val cyan">0h</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Resource Efficiency</h3>
+            <div id="admin-res-eff" style="height:100px; display:flex; align-items:center; justify-content:center;">
+              <canvas id="eff-chart" style="max-width:150px;"></canvas>
+              <div id="eff-val" style="font-size:24px; font-weight:700;">0%</div>
+            </div>
+            <p class="muted" style="text-align:center;">Avg. Factory-wide Utilization</p>
+          </div>
+          <div class="card">
+            <h3>Disruption Summary</h3>
+            <div id="admin-disruption-count" class="kpi-val red" style="text-align:center;">0</div>
+            <p class="muted" style="text-align:center;">Open Production Issues</p>
+          </div>
+          <div class="card">
+            <h3>Audit Snapshot</h3>
+            <div id="admin-last-audit" style="font-size:12px; height:100px; overflow-y:auto; color:var(--muted);">
+              No recent activity detected.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role-Specific Global Alerts -->
+      <div id="sec-admin-dashboard" class="alert alert-info">
+        <strong>Enterprise Perspective:</strong> You are viewing the factory with Administrative privileges. Overall
+        activity and multi-objective optimization weights are visible.
+      </div>
+      <div id="sec-supervisor-dashboard" class="alert alert-success">
+        <strong>Shift Perspective:</strong> You are currently managing floor operations. Use Job Locking and
+        Disruptions
+        to stabilize the schedule.
+      </div>
+
+      <!-- ══════════ SCHEDULE ══════════ -->
+      <div id="panel-schedule" class="panel active">
+        <div class="sec-title">📅 Schedule</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runSchedule()">▶ Run Schedule</button>
+          <button class="btn btn-warn" onclick="demoBreakdown()">💥 Demo: Breakdown</button>
+          <button class="btn btn-warn" onclick="demoAbsence()">🤒 Demo: Absence</button>
+          <button class="btn btn-warn" onclick="demoRush()">🚀 Demo: Rush Order</button>
+          <button class="btn btn-warn" onclick="demoSimultaneous()">⚡ Demo: Simultaneous</button>
+          <button class="btn btn-danger" onclick="clearSchedule()">🗑 Clear</button>
+          <button class="btn btn-ghost" onclick="loadSchedule()">↻ Refresh</button>
+        </div>
+        <div id="schedule-alert" style="margin-bottom:12px;"></div>
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table id="schedule-table">
+              <thead>
+                <tr>
+                  <th>Job</th>
+                  <th>Machine</th>
+                  <th>Worker</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Day</th>
+                  <th>Score</th>
+                  <th>Profit ₹</th>
+                  <th>Lock</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-body">
+                <tr>
+                  <td colspan="11" style="text-align:center;color:var(--muted);padding:32px;">No schedule yet — click
+                    <strong>▶ Run Schedule</strong> to begin
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ KPIs ══════════ -->
+      <div id="panel-kpis" class="panel">
+        <div class="sec-title">📊 KPIs & Analytics</div>
+        <div class="grid-4" id="kpi-cards" style="margin-bottom:16px;"></div>
+        <div class="grid-2" style="margin-bottom:16px;">
+          <div class="card">
+            <h3>💰 Financial Impact</h3>
+            <div id="fin-kpis"></div>
+          </div>
+          <div class="card">
+            <h3>📦 Schedule Summary</h3>
+            <div id="sched-kpis"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>🔧 Machine Utilization</h3>
+            <div id="mach-util"></div>
+          </div>
+          <div class="card">
+            <h3>👷 Worker Utilization</h3>
+            <div id="worker-util"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ RISK ══════════ -->
+      <div id="panel-risk" class="panel">
+        <div class="sec-title">⚠️ Risk Management</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="loadRisk()">↻ Refresh Risk Data</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div class="card">
+            <h3>Overload Status</h3>
+            <div id="overload-summary"></div>
+          </div>
+          <div class="card">
+            <h3>Net Impact Checker</h3>
+            <label>Job ID</label><input id="ni-job" placeholder="e.g. J001" />
+            <label style="margin-top:8px;">Days Delayed</label><input id="ni-days" type="number" value="0" min="0" />
+            <button class="btn btn-primary" style="margin-top:10px;width:100%;"
+              onclick="checkNetImpact()">Calculate</button>
+            <div id="ni-result" style="margin-top:12px;"></div>
+          </div>
+          <div class="card">
+            <h3>Decision Recommendation</h3>
+            <label>Job ID</label><input id="rec-job" placeholder="e.g. J001" />
+            <label style="margin-top:8px;">Days Delayed</label><input id="rec-days" type="number" value="0" min="0" />
+            <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="getRecommendation()">Get
+              Decision</button>
+            <div id="rec-result" style="margin-top:12px;"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>🔧 Machine Risk Assessment</h3>
+            <div id="machine-risk-table"></div>
+          </div>
+          <div class="card">
+            <h3>👷 Worker Risk Assessment</h3>
+            <div id="worker-risk-table"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ GOVERNANCE ══════════ -->
+      <div id="panel-governance" class="panel">
+        <div class="sec-title">🔒 Human Governance</div>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div class="card">
+            <h3>Job Lock / Unlock</h3>
+            <label>Job ID</label><input id="lock-job" placeholder="e.g. J001" />
+            <label style="margin-top:8px;">Your Name</label><input id="lock-by" value="supervisor" />
+            <div class="btn-group" style="margin-top:10px;">
+              <button class="btn btn-warn btn-sm" onclick="lockJob()">🔒 Lock</button>
+              <button class="btn btn-success btn-sm" onclick="unlockJob()">🔓 Unlock</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Manual Override</h3>
+            <label>Job ID</label><input id="ov-job" placeholder="J001" />
+            <label style="margin-top:8px;">Machine ID</label><input id="ov-machine" placeholder="M001" />
+            <label style="margin-top:8px;">Worker ID</label><input id="ov-worker" placeholder="W001" />
+            <label style="margin-top:8px;">Start Time (h)</label><input id="ov-start" type="number" value="8" />
+            <label style="margin-top:8px;">Requested By</label><input id="ov-by" value="supervisor" />
+            <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="manualOverride()">Apply
+              Override</button>
+          </div>
+          <div class="card">
+            <h3>⏳ Pending Approvals</h3>
+            <button class="btn btn-primary btn-sm" style="margin-bottom:10px;" onclick="loadApprovals()">↻
+              Refresh</button>
+            <div id="approvals-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>📋 Audit Trail</h3>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <input id="audit-filter" placeholder="Filter by entity ID..." style="max-width:240px;" />
+            <button class="btn btn-primary btn-sm" onclick="loadAudit()">↻ Refresh</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Entity ID</th>
+                  <th>Performed By</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="audit-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ SIMULATION ══════════ -->
+      <div id="panel-simulation" class="panel">
+        <div class="sec-title">🔬 Scenario Simulation</div>
+        <div class="grid-2" style="margin-bottom:16px;">
+          <div class="card">
+            <h3>Accept vs Reject Simulator</h3>
+            <div class="form-row">
+              <div><label>Job Name</label><input id="sim-name" value="New Customer Order" /></div>
+              <div><label>Processing Time (h)</label><input id="sim-pt" type="number" value="2.0" /></div>
+              <div><label>Machine Type</label><input id="sim-mt" value="CNC" /></div>
+              <div><label>Worker Skill</label><input id="sim-ws" value="CNC" /></div>
+              <div><label>Profit Margin (₹)</label><input id="sim-profit" type="number" value="10000" /></div>
+              <div><label>Delay Penalty (₹/day)</label><input id="sim-penalty" type="number" value="500" /></div>
+              <div><label>Reputation Risk</label><input id="sim-rep" type="number" value="5" /></div>
+              <div><label>Contractual?</label><select id="sim-contract">
+                  <option value="0">No</option>
+                  <option value="1">Yes</option>
+                </select></div>
+              <div><label>Industry Pattern</label><select id="sim-preset" onchange="applySimulationPreset()">
+                  <option value="">Manual</option>
+                  <option value="textile">Textile (High-Volume Loom)</option>
+                  <option value="automotive">Automotive (Precision CNC)</option>
+                </select></div>
+              <div><label>Routing Efficiency (0.1 - 1.0)</label>
+                <input type="number" id="sim-eff" value="1.0" step="0.1" min="0.1" max="1.0">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="runSimulation()">🔬 Simulate Decision</button>
+            <div id="sim-result" style="margin-top:16px;"></div>
+          </div>
+          <div class="card">
+            <h3>📐 Schedule Stability Index</h3>
+            <div id="stability-display" style="text-align:center;padding:20px 0;"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>💰 Profit Impact Overview</h3>
+            <div id="profit-impact"></div>
+          </div>
+          <div class="card">
+            <h3>📈 Utilization Trend</h3>
+            <div id="util-trend" style="overflow-x:auto;max-height:280px;overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ VERSIONS ══════════ -->
+      <div id="panel-versions" class="panel">
+        <div class="sec-title">🕑 Version History & Rollback</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="saveCheckpoint()">💾 Save Checkpoint</button>
+          <button class="btn btn-ghost" onclick="loadVersions()">↻ Refresh</button>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Saved Checkpoints</h3>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th>Saved At</th>
+                    <th>Size</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="versions-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Schedule Diff</h3>
+            <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end;">
+              <div style="flex:1"><label>Version A</label><input id="diff-a" type="number" placeholder="ID" /></div>
+              <div style="flex:1"><label>Version B</label><input id="diff-b" type="number" placeholder="ID" /></div>
+              <button class="btn btn-primary btn-sm" onclick="runDiff()">Compare</button>
+            </div>
+            <div id="diff-result"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ DISRUPTIONS ══════════ -->
+      <div id="panel-disruptions" class="panel">
+        <div class="sec-title">🚨 Disruption Log</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="loadDisruptions()">↻ Refresh</button>
+        </div>
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Entity</th>
+                  <th>Description</th>
+                  <th>Resolved</th>
+                </tr>
+              </thead>
+              <tbody id="disruptions-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ OPTIMIZER ══════════ -->
+      <div id="panel-optimizer" class="panel">
+        <div class="sec-title">⚙️ Optimizer Settings</div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Multi-Objective Weights</h3>
+            <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Adjust how the scheduler prioritises
+              competing objectives. Values are relative weights — the system normalises them internally.</p>
+            <label>W1 — Minimise Makespan</label>
+            <input id="w1" type="number" step="0.05" min="0" max="1" value="0.25" />
+            <label style="margin-top:10px;">W2 — Minimise Delay</label>
+            <input id="w2" type="number" step="0.05" min="0" max="1" value="0.25" />
+            <label style="margin-top:10px;">W3 — Maximise Profit</label>
+            <input id="w3" type="number" step="0.05" min="0" max="1" value="0.30" />
+            <label style="margin-top:10px;">W4 — Balance Utilization</label>
+            <input id="w4" type="number" step="0.05" min="0" max="1" value="0.20" />
+            <div style="display:flex;gap:8px;margin-top:16px;">
+              <button class="btn btn-primary" onclick="saveWeights()">💾 Save Weights</button>
+              <button class="btn btn-ghost" onclick="loadWeights()">↻ Load Current</button>
+            </div>
+            <div id="weights-result" style="margin-top:12px;"></div>
+          </div>
+          <div class="card">
+            <h3>Weight Guide</h3>
+            <div class="alert alert-info" style="margin-bottom:10px;">
+              <strong>W1 Makespan</strong> — Prioritise jobs that complete earliest overall. Good for
+              throughput-focused
+              factories.
+            </div>
+            <div class="alert alert-info" style="margin-bottom:10px;">
+              <strong>W2 Delay</strong> — Prioritise the most overdue jobs first. Good for on-time delivery KPIs.
+            </div>
+            <div class="alert alert-info" style="margin-bottom:10px;">
+              <strong>W3 Profit</strong> — Prioritise highest-margin jobs. Good for revenue-focused operations.
+            </div>
+            <div class="alert alert-info">
+              <strong>W4 Utilization</strong> — Balance load across machines and workers. Good for avoiding
+              bottlenecks.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /.app-body -->
+  <script>
+    const API = '';
+    let currentPanel = 'schedule';
+    let currentUser = null;
+
+    // ── Theme Management ──
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const target = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', target);
+      localStorage.setItem('sched-theme', target);
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('sched-theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+    initTheme();
+
+    function checkAuth() {
+      const stored = localStorage.getItem('smartsched_user');
+      if (!stored) {
+        window.location.href = '/login';
+        return;
+      }
+      currentUser = JSON.parse(stored);
+      document.getElementById('sys-status').innerText = `● ${currentUser.role.toUpperCase()}: ${currentUser.full_name}`;
+
+      const isAdmin = currentUser.role === 'admin';
+      const isSuper = currentUser.role === 'supervisor';
+
+      if (isAdmin) {
+        // ADMIN: Read-only Digital Dashboard focus - hide operational action buttons
+        document.querySelectorAll('.deploy-btn, .btn-warn, .btn-danger, .btn-primary').forEach(el => {
+          if (!el.innerText.includes('Refresh') && !el.innerText.includes('Load') && !el.innerText.includes('Digital Dashboard')) {
+            el.style.display = 'none';
+          }
+        });
+        // Hide operational sidebar nav items for Admin
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          const text = btn.innerText;
+          if (text.includes('Schedule') || text.includes('Governance') || text.includes('Optimizer') || text.includes('Versions')) {
+            btn.style.display = 'none';
+          }
+        });
+        showPanel('admin-digital');
+      }
+
+      if (isSuper) {
+        // SUPERVISOR: Full operational rights - hide admin-only Digital nav
+        document.getElementById('nav-admin-digital').style.display = 'none';
+        showPanel('schedule');
+      }
+
+      if (isSuper) {
+        document.getElementById('sec-admin-dashboard').style.display = 'none';
+      } else if (isAdmin) {
+        document.getElementById('sec-supervisor-dashboard').style.display = 'none';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('smartsched_user');
+      window.location.href = '/login';
+    }
+
+
+    function showPanel(name) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('panel-' + name);
+      if (target) target.classList.add('active');
+
+      // Update sidebar active state
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        if (b.onclick && b.onclick.toString().includes("'" + name + "'")) b.classList.add('active');
+      });
+
+      currentPanel = name;
+      if (name === 'admin-digital') loadAdminDigital();
+      if (name === 'schedule') loadSchedule();
+      if (name === 'kpis') loadKPIs();
+      if (name === 'risk') { loadRisk(); }
+      if (name === 'governance') { loadApprovals(); loadAudit(); }
+      if (name === 'simulation') { loadStability(); loadProfitImpact(); loadTrend(); }
+      if (name === 'versions') loadVersions();
+      if (name === 'disruptions') loadDisruptions();
+      if (name === 'optimizer') loadWeights();
+    }
+
+
+    async function loadAdminDigital() {
+      const d = await api('/api/kpis');
+      const f = d.financial_kpis || {};
+      const sk = d.schedule_kpis || {};
+      const mk = d.machine_kpis || {};
+      const s = d.summary || {};
+      const audit = await api('/api/governance/audit');
+
+      const net = f.net_factory_impact || 0;
+      const netEl = document.getElementById('admin-net-impact');
+      netEl.innerText = `₹${net.toLocaleString()}`;
+      netEl.className = net >= 0 ? 'green' : 'red';
+
+      const prog = document.getElementById('admin-profit-fill');
+      const totalPotential = f.total_profit_potential || 1;
+      prog.style.width = Math.max(0, Math.min(100, (net / totalPotential) * 100)) + '%';
+
+      document.getElementById('admin-otd').innerText = `${sk.on_time_delivery_pct || 0}%`;
+      document.getElementById('admin-makespan').innerText = `${sk.makespan_hours || 0}h`;
+
+      const avgUtil = mk.avg_utilization_pct || 0;
+      document.getElementById('eff-val').innerText = `${avgUtil}%`;
+      document.getElementById('eff-val').style.color = avgUtil > 90 ? 'var(--red)' : avgUtil > 70 ? 'var(--yellow)' : 'var(--green)';
+
+      document.getElementById('admin-disruption-count').innerText = s.open_disruptions || 0;
+
+      const lastAudit = audit.slice(0, 5).map(a => `<div>[${a.action}] ${a.details || ''}</div>`).join('');
+      document.getElementById('admin-last-audit').innerHTML = lastAudit || 'No recent activity.';
+    }
+
+    function toast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      const el = document.createElement('div');
+      el.className = 'toast-item';
+      const colors = { info: 'var(--accent)', success: 'var(--green)', warn: 'var(--yellow)', error: 'var(--red)' };
+      el.style.borderLeft = '3px solid ' + (colors[type] || colors.info);
+      el.textContent = msg;
+      t.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    async function api(path, method = 'GET', body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const r = await fetch(API + path, opts);
+      return r.json();
+    }
+
+    // ── Schedule ──
+    async function runSchedule() {
+      toast('Running multi-objective scheduler...', 'info');
+      const res = await api('/api/schedule/run', 'POST');
+      toast(`Scheduled ${res.scheduled} jobs, ${res.failed} failed.`, res.failed > 0 ? 'warn' : 'success');
+      loadSchedule();
+    }
+    async function clearSchedule() {
+      await api('/api/schedule/clear', 'DELETE');
+      toast('Schedule cleared.', 'warn');
+      loadSchedule();
+    }
+    async function loadSchedule() {
+      const rows = await api('/api/schedule');
+      const tbody = document.getElementById('schedule-body');
+      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px;">No schedule entries.</td></tr>'; return; }
+      tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><strong>${r.job_name}</strong><br><small class="muted">${r.job_id}</small></td>
+      <td>${r.machine_name}<br><small class="muted">${r.machine_type}</small></td>
+      <td>${r.worker_name}</td>
+      <td>${r.start_time?.toFixed(2)}h</td>
+      <td>${r.end_time?.toFixed(2)}h</td>
+      <td>Day ${r.day || 1}</td>
+      <td class="accent">${(r.urgency_score || 0).toFixed(1)}</td>
+      <td class="green">₹${(r.profit_margin || 0).toLocaleString()}</td>
+      <td>${r.job_lock_status ? '<span class="tag tag-lock">🔒 Locked</span>' : '<span class="tag tag-ok">Free</span>'}</td>
+      <td><span class="tag tag-blue">${r.status}</span></td>
+      <td><button class="btn btn-warn btn-sm" onclick="quickLock('${r.job_id}')">Lock</button></td>
+    </tr>`).join('');
+    }
+    async function quickLock(id) {
+      await api('/api/governance/lock/' + id + '?locked_by=' + (currentUser?.username || 'supervisor'), 'POST');
+      toast('Job ' + id + ' locked.', 'warn');
+      loadSchedule();
+      loadKPIs();
+      if (currentUser?.role === 'admin') loadAdminDigital();
+    }
+    // Added loadDisruptions() to all simulation actions for real-time log updates
+    async function demoBreakdown() { toast('Simulating machine breakdown...', 'warn'); const r = await api('/api/demo/machine-breakdown', 'POST'); toast(`Rescheduled ${r.scheduled} jobs after breakdown.`, 'success'); loadSchedule(); loadDisruptions(); loadKPIs(); }
+    async function demoAbsence() { toast('Simulating worker absence...', 'warn'); const r = await api('/api/demo/worker-absence', 'POST'); toast(`Rescheduled ${r.scheduled} jobs.`, 'success'); loadSchedule(); loadDisruptions(); loadKPIs(); }
+    async function demoRush() { toast('Inserting rush order...', 'warn'); const r = await api('/api/demo/rush-order', 'POST'); toast(`Rush order scheduled. ${r.scheduled} total.`, 'success'); loadSchedule(); loadDisruptions(); loadKPIs(); }
+    async function demoSimultaneous() { toast('Simultaneous breakdown + rush order...', 'warn'); const r = await api('/api/demo/simultaneous', 'POST'); toast(`Complex event handled. ${r.scheduled} jobs scheduled.`, 'success'); loadSchedule(); loadDisruptions(); loadKPIs(); }
+
+    // ── KPIs ──
+    async function loadKPIs() {
+      const d = await api('/api/kpis');
+      const s = d.summary || {};
+      document.getElementById('kpi-cards').innerHTML = [
+        { label: 'Total Jobs', val: s.total_jobs || 0, color: 'accent' },
+        { label: 'Scheduled', val: s.scheduled_jobs || 0, color: 'green' },
+        { label: 'Machines Active', val: `${s.active_machines || 0}/${s.total_machines || 0}`, color: 'yellow' },
+        { label: 'Machines Ready', val: `${s.available_machines || 0}/${s.total_machines || 0}`, color: 'cyan' },
+        { label: 'Open Disruptions', val: s.open_disruptions || 0, color: s.open_disruptions > 0 ? 'red' : 'green' },
+        { label: 'Locked Jobs', val: s.locked_jobs || 0, color: 'purple' },
+        { label: 'Contractual Jobs', val: s.contractual_jobs || 0, color: 'yellow' },
+        { label: 'No Material', val: s.no_material_jobs || 0, color: s.no_material_jobs > 0 ? 'red' : 'green' },
+      ].map(c => `<div class="card"><h3>${c.label}</h3><div class="kpi-val ${c.color}">${c.val}</div></div>`).join('');
+
+      const f = d.financial_kpis || {};
+      document.getElementById('fin-kpis').innerHTML = `
+    <div style="display:grid;gap:10px;">
+      <div style="display:flex;justify-content:space-between;"><span>💰 Profit Potential</span><strong class="green">₹${(f.total_profit_potential || 0).toLocaleString()}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>⏰ Penalty Exposure</span><strong class="red">₹${(f.total_delay_penalty_risk || 0).toLocaleString()}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>⭐ Reputation Risk</span><strong class="yellow">₹${(f.total_reputation_risk || 0).toLocaleString()}</strong></div>
+      <hr style="border-color:var(--border)"/>
+      <div style="display:flex;justify-content:space-between;"><span><strong>Net Factory Impact</strong></span><strong class="${(f.net_factory_impact || 0) >= 0 ? 'green' : 'red'}">₹${(f.net_factory_impact || 0).toLocaleString()}</strong></div>
+    </div>`;
+
+      const sk = d.schedule_kpis || {};
+      document.getElementById('sched-kpis').innerHTML = `
+    <div style="display:grid;gap:10px;">
+      <div style="display:flex;justify-content:space-between;"><span>Makespan</span><strong class="accent">${sk.makespan_hours || 0}h</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>On-Time Delivery</span><strong class="${(sk.on_time_delivery_pct || 0) >= 80 ? 'green' : 'red'}">${sk.on_time_delivery_pct || 0}%</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>On Time</span><strong class="green">${sk.on_time_count || 0}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Late</span><strong class="red">${sk.late_count || 0}</strong></div>
+    </div>`;
+
+      const mk = d.machine_kpis || {};
+      document.getElementById('mach-util').innerHTML = (mk.machines || []).map(m => `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+        <span>${m.name} <span class="tag ${m.status === 'available' ? 'tag-ok' : 'tag-crit'}">${m.status}</span> ${m.maintenance_due ? '<span class="tag tag-warn">Maint Due</span>' : ''}</span>
+        <span class="${m.utilization > 90 ? 'red' : m.utilization > 70 ? 'yellow' : 'green'}">${m.utilization}%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${m.utilization}%;background:${m.utilization > 90 ? 'var(--red)' : m.utilization > 70 ? 'var(--yellow)' : 'var(--green)'};"></div></div>
+      <small style="color:var(--muted);">Reliability: ${(m.reliability * 100).toFixed(0)}% | Idle: ${m.idle_hours}h</small>
+    </div>`).join('');
+
+      const wk = d.worker_kpis || {};
+      document.getElementById('worker-util').innerHTML = (wk.workers || []).map(w => `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+        <span>${w.name} ${w.on_leave ? '<span class="tag tag-crit">On Leave</span>' : ''} ${w.overtime_eligible ? '<span class="tag tag-blue">OT</span>' : ''}</span>
+        <span class="${w.utilization > 90 ? 'red' : w.utilization > 70 ? 'yellow' : 'green'}">${w.utilization}%</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar" style="width:${w.utilization}%;background:${w.utilization > 90 ? 'var(--red)' : w.utilization > 70 ? 'var(--yellow)' : 'var(--green)'};"></div></div>
+      <small style="color:var(--muted);">Skills: ${(w.skills || []).join(', ')}</small>
+    </div>`).join('');
+    }
+
+    // ── Risk ──
+    async function loadRisk() {
+      const ov = await api('/api/risk/overload');
+      const machinedets = (ov.overloaded_machines || []).map(m => `
+        <div class="alert alert-warn" style="margin-top:8px;font-size:11px;border-left:4px solid var(--yellow);">
+          <strong>Machine: ${m.name} (${m.utilization_pct}%)</strong><br>
+          Problem: Overload detected. ${m.recommendations ? m.recommendations.join(' ') : 'No specifics provided.'}
+        </div>
+      `).join('');
+
+      const workerdets = (ov.overloaded_workers || []).map(w => `
+        <div class="alert alert-warn" style="margin-top:8px;font-size:11px;border-left:4px solid var(--accent);">
+          <strong>Worker: ${w.name} (${w.utilization_pct}%)</strong><br>
+          Problem: Workload exceeds shift capacity. ${w.recommendations ? w.recommendations.join(' ') : 'No specifics provided.'}
+        </div>
+      `).join('');
+
+      const critdets = (ov.critical_entities || []).map(e => `
+        <div class="alert alert-danger" style="margin-top:8px;font-size:11px;">
+          <strong>🚨 CRITICAL: ${e.name || e.machine_id || e.worker_id}</strong><br>
+          ${(e.recommendations || []).join(' ')}
+        </div>
+      `).join('');
+
+      document.getElementById('overload-summary').innerHTML = `
+    <div class="alert ${ov.has_critical ? 'alert-danger' : ov.total_overloaded > 0 ? 'alert-warn' : 'alert-success'}">
+      ${ov.has_critical ? '🚨 Critical conditions detected!' : ov.total_overloaded > 0 ? '⚠️ Overload detected' : '✅ All systems operating normally'}
+    </div>
+    ${critdets}
+    ${machinedets}
+    ${workerdets}
+    ${!ov.total_overloaded && !ov.has_critical ? '<p style="color:var(--muted);font-size:12px;margin-top:8px">No overloads detected.</p>' : ''}
+    `;
+
+      const mr = await api('/api/risk/machines');
+      document.getElementById('machine-risk-table').innerHTML = `<div style="overflow-x:auto;"><table>
+    <thead><tr><th>Machine</th><th>Reliability</th><th>Utilization</th><th>Alert</th><th>Recs</th></tr></thead>
+    <tbody>${mr.map(m => `<tr>
+      <td>${m.name}</td>
+      <td><span class="${m.reliability_score < 0.3 ? 'red' : m.reliability_score < 0.6 ? 'yellow' : 'green'}">${(m.reliability_score * 100).toFixed(0)}%</span></td>
+      <td>${m.utilization_pct}%</td>
+      <td><span class="tag ${m.alert_level === 'ok' ? 'tag-ok' : m.alert_level === 'warning' ? 'tag-warn' : 'tag-crit'}">${m.alert_level}</span></td>
+      <td style="font-size:11px;color:var(--muted);">${(m.recommendations || []).join('; ') || '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+
+      const wr = await api('/api/risk/workers');
+      document.getElementById('worker-risk-table').innerHTML = `<div style="overflow-x:auto;"><table>
+    <thead><tr><th>Worker</th><th>Reliability</th><th>Utilization</th><th>Alert</th></tr></thead>
+    <tbody>${wr.map(w => `<tr>
+      <td>${w.name}</td>
+      <td><span class="${w.reliability_score < 0.3 ? 'red' : w.reliability_score < 0.6 ? 'yellow' : 'green'}">${(w.reliability_score * 100).toFixed(0)}%</span></td>
+      <td>${w.utilization_pct}%</td>
+      <td><span class="tag ${w.alert_level === 'ok' ? 'tag-ok' : w.alert_level === 'warning' ? 'tag-warn' : 'tag-crit'}">${w.alert_level}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+    }
+
+    async function checkNetImpact() {
+      const jid = document.getElementById('ni-job').value.trim();
+      const days = document.getElementById('ni-days').value;
+      if (!jid) { toast('Enter a Job ID', 'warn'); return; }
+      const r = await api(`/api/risk/net-impact/${jid}?days_delayed=${days}`);
+      if (r.error) { toast(r.error, 'error'); return; }
+      document.getElementById('ni-result').innerHTML = `
+    <div class="alert ${r.net_impact >= 0 ? 'alert-success' : 'alert-danger'}">
+      <strong>Net Impact: ₹${r.net_impact.toLocaleString()}</strong><br>
+      Profit: ₹${r.profit_margin.toLocaleString()} | Penalty: ₹${r.delay_penalty.toLocaleString()} | Rep Risk: ₹${r.reputation_risk.toLocaleString()}
+    </div>`;
+    }
+    async function getRecommendation() {
+      const jid = document.getElementById('rec-job').value.trim();
+      const days = document.getElementById('rec-days').value;
+      if (!jid) { toast('Enter a Job ID', 'warn'); return; }
+      const r = await api(`/api/risk/decision/${jid}?days_delayed=${days}`);
+      if (r.error) { toast(r.error, 'error'); return; }
+      document.getElementById('rec-result').innerHTML = `
+    <div class="alert ${r.decision === 'accept' ? 'alert-success' : 'alert-danger'}">
+      <strong>${r.decision === 'accept' ? '✅ ACCEPT' : '❌ REJECT'}</strong><br>${r.reason}
+      ${r.requires_approval ? '<br><span class="tag tag-warn">⚠️ Requires Approval</span>' : ''}
+    </div>`;
+    }
+
+    // ── Governance ──
+    async function lockJob() {
+      const jid = document.getElementById('lock-job').value.trim(), by = document.getElementById('lock-by').value;
+      if (!jid) return;
+      const r = await api(`/api/governance/lock/${jid}?locked_by=${by}`, 'POST');
+      toast(r.error || 'Job locked.', r.error ? 'error' : 'warn');
+      loadAudit(); loadKPIs(); loadSchedule();
+      if (currentUser?.role === 'admin') loadAdminDigital();
+    }
+    async function unlockJob() {
+      const jid = document.getElementById('lock-job').value.trim(), by = document.getElementById('lock-by').value;
+      if (!jid) return;
+      const r = await api(`/api/governance/unlock/${jid}?unlocked_by=${by}`, 'POST');
+      toast(r.error || 'Job unlocked.', r.error ? 'error' : 'success');
+      loadAudit(); loadKPIs(); loadSchedule();
+      if (currentUser?.role === 'admin') loadAdminDigital();
+    }
+    async function manualOverride() {
+      const body = { machine_id: document.getElementById('ov-machine').value, worker_id: document.getElementById('ov-worker').value, start_time: parseFloat(document.getElementById('ov-start').value), requested_by: document.getElementById('ov-by').value };
+      const jid = document.getElementById('ov-job').value.trim();
+      const r = await api(`/api/governance/override/${jid}`, 'POST', body);
+      toast(r.error || `Override applied. Start: ${r.start_time}h`, r.error ? 'error' : 'success');
+      loadAudit();
+    }
+    async function loadApprovals() {
+      const rows = await api('/api/governance/approvals');
+      document.getElementById('approvals-list').innerHTML = !rows.length
+        ? '<p style="color:var(--muted);font-size:12px;">No pending approvals.</p>'
+        : rows.map(r => `<div class="alert alert-warn" style="margin-bottom:8px;">
+      <strong>${r.action}</strong> — Job: ${r.job_id}<br>
+      <small>By: ${r.requested_by}</small><br>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="btn btn-success btn-sm" onclick="approveItem(${r.id})">✅ Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectItem(${r.id})">❌ Reject</button>
+      </div>
+    </div>`).join('');
+    }
+    async function approveItem(id) { await api(`/api/governance/approve/${id}?approved_by=supervisor`, 'POST'); toast('Approved!', 'success'); loadApprovals(); }
+    async function rejectItem(id) { await api(`/api/governance/reject/${id}?rejected_by=supervisor`, 'POST'); toast('Rejected.', 'warn'); loadApprovals(); }
+    async function loadAudit() {
+      const filter = document.getElementById('audit-filter').value.trim();
+      const url = '/api/governance/audit' + (filter ? `?entity_id=${filter}` : '');
+      const rows = await api(url);
+      document.getElementById('audit-body').innerHTML = rows.map(r => `<tr>
+    <td style="font-size:11px;color:var(--muted);white-space:nowrap;">${r.occurred_at || '—'}</td>
+    <td><span class="tag tag-blue">${r.action}</span></td>
+    <td style="color:var(--muted)">${r.entity_type}</td>
+    <td>${r.entity_id}</td>
+    <td>${r.performed_by}</td>
+    <td style="font-size:11px;color:var(--muted)">${r.details || '—'}</td>
+  </tr>`).join('');
+    }
+
+    // ── Simulation ──
+    function applySimulationPreset() {
+      const preset = document.getElementById('sim-preset').value;
+      if (preset === 'textile') {
+        document.getElementById('sim-name').value = 'Cotton Batch X';
+        document.getElementById('sim-pt').value = '4.0';
+        document.getElementById('sim-mt').value = 'Loom';
+        document.getElementById('sim-ws').value = 'Weaver';
+        document.getElementById('sim-profit').value = '15000';
+        document.getElementById('sim-penalty').value = '800';
+      } else if (preset === 'automotive') {
+        document.getElementById('sim-name').value = 'Gear Assembly';
+        document.getElementById('sim-pt').value = '2.5';
+        document.getElementById('sim-mt').value = 'CNC';
+        document.getElementById('sim-ws').value = 'Technician';
+        document.getElementById('sim-profit').value = '25000';
+        document.getElementById('sim-penalty').value = '2000';
+      }
+
+      // Auto-set efficiency for some presets
+      if (preset === 'textile') document.getElementById('sim-eff').value = '0.7'; // Textiles are often slower due to complexity
+      else document.getElementById('sim-eff').value = '1.0';
+    }
+
+    async function runSimulation() {
+      const body = {
+        id: 'SIM001',
+        name: document.getElementById('sim-name').value,
+        processing_time: parseFloat(document.getElementById('sim-pt').value),
+        required_machine_type: document.getElementById('sim-mt').value,
+        required_worker_skill: document.getElementById('sim-ws').value,
+        profit_margin: parseFloat(document.getElementById('sim-profit').value),
+        delay_penalty: parseFloat(document.getElementById('sim-penalty').value),
+        reputation_risk: parseFloat(document.getElementById('sim-rep').value),
+        contractual: parseInt(document.getElementById('sim-contract').value),
+        efficiency_modifier: parseFloat(document.getElementById('sim-eff').value)
+      };
+      const r = await api('/api/simulation/compare', 'POST', body);
+      const acc = r.accept_scenario, rej = r.reject_scenario;
+      document.getElementById('sim-result').innerHTML = `
+    <div class="alert ${r.recommendation === 'accept' ? 'alert-success' : 'alert-danger'}" style="margin-bottom:12px;">
+      <strong>Recommendation: ${r.recommendation === 'accept' ? '✅ ACCEPT' : '❌ REJECT'}</strong><br>${r.reason}
+    </div>
+    <div class="grid-2">
+      <div class="card" style="border-color:var(--green);">
+        <h3 class="green">Accept Scenario</h3>
+        <p>Net Impact: <strong class="${acc.net_impact >= 0 ? 'green' : 'red'}">₹${acc.net_impact.toLocaleString()}</strong></p>
+        <p>Profit Gained: <strong class="green">₹${acc.profit_gained.toLocaleString()}</strong></p>
+        <p>Machine Util: <strong>${acc.machine_utilization_pct}%</strong></p>
+        <p>Feasible: <strong>${acc.feasible ? '✅ Yes' : '❌ No'}</strong></p>
+      </div>
+      <div class="card" style="border-color:var(--red);">
+        <h3 class="red">Reject Scenario</h3>
+        <p>Profit Lost: <strong class="red">₹${rej.profit_lost.toLocaleString()}</strong></p>
+        <p>Rep Risk Saved: <strong class="green">₹${rej.reputation_risk_saved.toLocaleString()}</strong></p>
+        <p>Capacity Freed: <strong>${rej.capacity_freed_hours}h</strong></p>
+        <p>Opportunity Cost: <strong class="yellow">₹${rej.net_opportunity_cost.toLocaleString()}</strong></p>
+      </div>
+    </div>`;
+    }
+    async function loadStability() {
+      const r = await api('/api/simulation/stability');
+      const color = r.level === 'stable' ? 'var(--green)' : r.level === 'warning' ? 'var(--yellow)' : 'var(--red)';
+      document.getElementById('stability-display').innerHTML = `
+    <div class="stability-score" style="color:${color}">${r.stability_index}</div>
+    <div style="font-size:14px;color:${color};margin:8px 0;text-transform:uppercase;font-weight:700;">${r.level}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:16px;text-align:left;">
+      <div>Job Schedule: ${r.job_schedule_pct}%</div>
+      <div>Machine Avail: ${r.machine_avail_pct}%</div>
+      <div>Worker Avail: ${r.worker_avail_pct}%</div>
+      <div>Avg Reliability: ${r.avg_reliability_pct}%</div>
+      <div>Open Disruptions: ${r.open_disruptions} (−${r.disruption_penalty}pts)</div>
+    </div>`;
+    }
+    async function loadProfitImpact() {
+      const r = await api('/api/simulation/profit-impact');
+      document.getElementById('profit-impact').innerHTML = `
+    <div style="display:grid;gap:10px;">
+      <div style="display:flex;justify-content:space-between;"><span>Total Profit Potential</span><strong class="green">₹${(r.total_profit_potential || 0).toLocaleString()}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Penalty Risk</span><strong class="red">₹${(r.total_delay_penalty_risk || 0).toLocaleString()}</strong></div>
+      <div style="display:flex;justify-content:space-between;"><span>Reputation Risk</span><strong class="yellow">₹${(r.total_reputation_risk || 0).toLocaleString()}</strong></div>
+      <hr style="border-color:var(--border)"/>
+      <div style="display:flex;justify-content:space-between;"><strong>Net Impact</strong><strong class="${(r.net_factory_impact || 0) >= 0 ? 'green' : 'red'}">₹${(r.net_factory_impact || 0).toLocaleString()}</strong></div>
+      <div style="color:var(--muted);font-size:12px;">Based on ${r.total_jobs_analysed} jobs (${r.contractual_job_count} contractual)</div>
+    </div>`;
+    }
+    async function loadTrend() {
+      const rows = await api('/api/simulation/trends');
+      if (!rows.length) { document.getElementById('util-trend').innerHTML = '<p style="color:var(--muted);">No trend data yet — run a schedule first.</p>'; return; }
+      document.getElementById('util-trend').innerHTML = `<table>
+    <thead><tr><th>Day</th><th>Machine</th><th>Used</th><th>Utilization</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td>Day ${r.day}</td><td>${r.machine_name}</td>
+      <td>${r.hours_used}h</td>
+      <td><span class="${r.utilization_pct > 90 ? 'red' : r.utilization_pct > 70 ? 'yellow' : 'green'}">${r.utilization_pct}%</span></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+    }
+
+    // ── Versions ──
+    async function loadVersions() {
+      const rows = await api('/api/versions');
+      document.getElementById('versions-body').innerHTML = !rows.length
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No checkpoints saved yet.</td></tr>'
+        : rows.map(r => `<tr>
+      <td><strong>v${r.version_no}</strong></td>
+      <td style="font-size:12px;">${r.description}</td>
+      <td style="font-size:11px;color:var(--muted);">${r.created_at || '—'}</td>
+      <td>${Math.round((r.snapshot_size_bytes || 0) / 1024)}KB</td>
+      <td><button class="btn btn-danger btn-sm" onclick="rollback(${r.id})">↩ Rollback</button></td>
+    </tr>`).join('');
+    }
+    async function saveCheckpoint() {
+      const desc = prompt('Checkpoint description:', 'Manual checkpoint');
+      if (desc === null) return;
+      const r = await api(`/api/versions/checkpoint?description=${encodeURIComponent(desc)}`, 'POST');
+      toast(`Checkpoint v${r.version_no} saved.`, 'success');
+      loadVersions();
+    }
+    async function rollback(id) {
+      if (!confirm('Roll back to checkpoint ' + id + '? Current state will be auto-saved first.')) return;
+      const r = await api('/api/versions/rollback/' + id, 'POST');
+      toast(`Rolled back to v${r.version_no}.`, 'success');
+      loadVersions();
+    }
+    async function runDiff() {
+      const a = document.getElementById('diff-a').value, b = document.getElementById('diff-b').value;
+      if (!a || !b) { toast('Enter both version IDs', 'warn'); return; }
+      const r = await api(`/api/versions/diff?v1=${a}&v2=${b}`);
+      if (r.error) { document.getElementById('diff-result').innerHTML = `<div class="alert alert-danger">${r.error}</div>`; return; }
+      document.getElementById('diff-result').innerHTML = `
+    <div class="alert alert-info">v${r.checkpoint_a} → v${r.checkpoint_b}: <span class="diff-add">+${r.added_count} added</span>, <span class="diff-rm">−${r.removed_count} removed</span>, <span class="diff-ch">~${r.changed_count} changed</span></div>
+    ${r.added.map(e => `<div class="diff-add" style="font-size:11px;">+ ${e.job_id} → ${e.machine_id} @ ${e.start_time}h</div>`).join('')}
+    ${r.removed.map(e => `<div class="diff-rm" style="font-size:11px;">− ${e.job_id} from ${e.machine_id}</div>`).join('')}
+    ${r.changed.map(e => `<div class="diff-ch" style="font-size:11px;">~ ${e.job_id}: ${e.before.machine_id}@${e.before.start_time}h → ${e.after.machine_id}@${e.after.start_time}h</div>`).join('')}`;
+    }
+
+    // ── Disruptions ──
+    async function loadDisruptions() {
+      const rows = await api('/api/disruptions');
+      document.getElementById('disruptions-body').innerHTML = !rows.length
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);">No disruptions recorded.</td></tr>'
+        : rows.map(r => `<tr>
+      <td style="font-size:11px;color:var(--muted);">${r.occurred_at || '—'}</td>
+      <td><span class="tag tag-warn">${r.type}</span></td>
+      <td>${r.entity_id}</td>
+      <td style="font-size:12px;">${r.description}</td>
+      <td>
+        ${r.resolved
+            ? '<span class="tag tag-ok">✅ Resolved</span>'
+            : `<button class="btn btn-blue btn-sm" onclick="resolveDisruption('${r.type}', '${r.entity_id}')">Resolve</button>`}
+      </td>
+    </tr>`).join('');
+    }
+
+    async function resolveDisruption(type, id) {
+      let endpoint = '';
+      if (type.includes('machine')) endpoint = `/api/reschedule/restore-machine/${id}`;
+      else if (type.includes('worker')) endpoint = `/api/reschedule/restore-worker/${id}`;
+      else { toast('Auto-resolving event...', 'info'); endpoint = `/api/demo/reset`; } // Fallback for complex events
+
+      await api(endpoint, 'POST');
+      toast(`Disruption ${id} resolved.`, 'success');
+      loadDisruptions();
+      loadKPIs();
+      if (currentUser?.role === 'admin') loadAdminDigital();
+    }
+
+    // ── Optimizer ──
+    async function loadWeights() {
+      const w = await api('/api/optimizer/settings');
+      document.getElementById('w1').value = w.w1_makespan || 0.25;
+      document.getElementById('w2').value = w.w2_delay || 0.25;
+      document.getElementById('w3').value = w.w3_profit || 0.30;
+      document.getElementById('w4').value = w.w4_utilization || 0.20;
+    }
+    async function saveWeights() {
+      const body = { w1_makespan: parseFloat(document.getElementById('w1').value), w2_delay: parseFloat(document.getElementById('w2').value), w3_profit: parseFloat(document.getElementById('w3').value), w4_utilization: parseFloat(document.getElementById('w4').value) };
+      const r = await api('/api/optimizer/settings', 'PUT', body);
+      toast('Weights updated. Re-run schedule to apply.', 'success');
+      document.getElementById('weights-result').innerHTML = `<div class="alert alert-success">Saved: W1=${r.w1_makespan} W2=${r.w2_delay} W3=${r.w3_profit} W4=${r.w4_utilization}</div>`;
+    }
+
+    // Init
+    checkAuth();
+    loadSchedule();
+  </script>
+</body>
+
+</html>
